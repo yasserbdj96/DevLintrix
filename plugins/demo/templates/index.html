@@ -1,0 +1,25 @@
+<!-- plugins/demo/templates/index.html -->
+{% extends "base.html" %}
+{% block title %}Demo Plugin{% endblock %}
+
+{% block extra_css %}{% endblock %}
+
+{% block content %}
+
+    <!-- Access specific plugin's config -->
+    {% set demo_config = plugin_configs('demo') %}
+    {% set demo_info = plugin_infos('demo') %}
+    
+    {% if demo_config and demo_config.GITHUB_CLIENT_ID %}
+        <p>GitHub Client ID: '{{ demo_config.GITHUB_CLIENT_ID }}' from plugin config.json</p>
+    {% endif %}
+    
+    {% if demo_info %}
+        <p>Plugin Name: '{{ demo_info.name }}' from plugin.json</p>
+        <p>Plugin Version: '{{ demo_info.version }}'</p>
+        <p>Description: {{ demo_info.description }}</p>
+    {% endif %}
+
+{% endblock %}
+
+{% block extra_js %}{% endblock %}

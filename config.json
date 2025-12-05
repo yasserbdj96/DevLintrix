@@ -1,0 +1,5 @@
+{
+    "DEBUG": true,
+    "SECRET_KEY": "yourkey",
+    "PLUGINS_ENABLED": ["demo"]
+}
