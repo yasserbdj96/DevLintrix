@@ -1,25 +1,97 @@
 <!-- plugins/demo/templates/index.html -->
 {% extends "base.html" %}
-{% block title %}Demo Plugin{% endblock %}
+{% block title %}Demo Plugin Home{% endblock %}
 
-{% block extra_css %}{% endblock %}
-
-{% block content %}
-
-    <!-- Access specific plugin's config -->
-    {% set demo_config = plugin_configs('demo') %}
-    {% set demo_info = plugin_infos('demo') %}
-    
-    {% if demo_config and demo_config.GITHUB_CLIENT_ID %}
-        <p>GitHub Client ID: '{{ demo_config.GITHUB_CLIENT_ID }}' from plugin config.json</p>
-    {% endif %}
-    
-    {% if demo_info %}
-        <p>Plugin Name: '{{ demo_info.name }}' from plugin.json</p>
-        <p>Plugin Version: '{{ demo_info.version }}'</p>
-        <p>Description: {{ demo_info.description }}</p>
-    {% endif %}
-
+{% block extra_css %}
+<style>
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 20px; border-radius: 10px; margin-bottom: 30px; }
+    .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .card h3 { margin-top: 0; color: #333; }
+    .nav-links { display: flex; gap: 15px; margin-top: 20px; }
+    .nav-links a { background: white; color: #667eea; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; }
+    .nav-links a:hover { background: #f0f0f0; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .stat-card { background: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .stat-number { font-size: 36px; font-weight: bold; color: #667eea; }
+    .stat-label { color: #666; margin-top: 5px; }
+    .config-info { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; }
+    .error { background: #fee; border: 1px solid #fcc; padding: 15px; border-radius: 5px; color: #c00; }
+    .post-item { border-bottom: 1px solid #eee; padding: 15px 0; }
+    .post-item:last-child { border-bottom: none; }
+    .post-title { font-weight: bold; color: #333; }
+    .post-meta { color: #666; font-size: 14px; margin-top: 5px; }
+</style>
 {% endblock %}
 
-{% block extra_js %}{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="header">
+        <h1>🚀 Demo Plugin</h1>
+        <p>Example plugin with database integration and full CRUD operations</p>
+        <div class="nav-links">
+            <a href="{{ url_for('demo.users') }}">👥 Users</a>
+            <a href="{{ url_for('demo.posts') }}">📝 Posts</a>
+            <a href="{{ url_for('demo.create_user') }}">➕ New User</a>
+            <a href="{{ url_for('demo.create_post') }}">➕ New Post</a>
+        </div>
+    </div>
+
+    {% if error %}
+    <div class="error">
+        <strong>Error:</strong> {{ error }}
+    </div>
+    {% endif %}
+
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-number">{{ users|length }}</div>
+            <div class="stat-label">Active Users</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ posts|length }}</div>
+            <div class="stat-label">Published Posts</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📊 Recent Posts</h3>
+        {% if posts %}
+            {% for post in posts[:5] %}
+            <div class="post-item">
+                <div class="post-title">{{ post.title }}</div>
+                <div class="post-meta">
+                    {{ post.content[:150] }}{% if post.content|length > 150 %}...{% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>No posts yet. <a href="{{ url_for('demo.create_post') }}">Create one!</a></p>
+        {% endif %}
+    </div>
+
+    <div class="card config-info">
+        <h3>⚙️ Plugin Configuration</h3>
+        {% set demo_config = plugin_configs('demo') %}
+        {% set demo_info = plugin_infos('demo') %}
+        
+        {% if demo_info %}
+            <p><strong>Plugin Name:</strong> {{ demo_info.name }}</p>
+            <p><strong>Version:</strong> {{ demo_info.version }}</p>
+            <p><strong>Description:</strong> {{ demo_info.description }}</p>
+        {% endif %}
+        
+        {% if demo_config and demo_config.GITHUB_CLIENT_ID %}
+            <p><strong>GitHub Integration:</strong> Configured ✅</p>
+        {% else %}
+            <p><strong>GitHub Integration:</strong> Not configured</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    console.log('Demo plugin loaded successfully!');
+</script>
+{% endblock %}

@@ -1,0 +1,76 @@
+<!-- plugins/demo/templates/users.html -->
+{% extends "base.html" %}
+{% block title %}Users - Demo Plugin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; border-radius: 10px; margin-bottom: 30px; }
+    .btn { display: inline-block; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; }
+    .btn:hover { background: #5568d3; }
+    .users-table { width: 100%; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .users-table table { width: 100%; border-collapse: collapse; }
+    .users-table th { background: #f8f9fa; padding: 15px; text-align: left; font-weight: bold; border-bottom: 2px solid #dee2e6; }
+    .users-table td { padding: 15px; border-bottom: 1px solid #eee; }
+    .users-table tr:last-child td { border-bottom: none; }
+    .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+    .status-active { background: #d4edda; color: #155724; }
+    .status-inactive { background: #f8d7da; color: #721c24; }
+    .back-link { color: white; text-decoration: none; margin-right: 20px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <a href="{{ url_for('demo.index') }}" class="back-link">← Back</a>
+        <h1>👥 All Users</h1>
+        <p>Manage demo plugin users</p>
+        <a href="{{ url_for('demo.create_user') }}" class="btn">➕ Create New User</a>
+    </div>
+
+    {% if error %}
+    <div style="background: #fee; border: 1px solid #fcc; padding: 15px; border-radius: 5px; color: #c00; margin-bottom: 20px;">
+        <strong>Error:</strong> {{ error }}
+    </div>
+    {% endif %}
+
+    <div class="users-table">
+        {% if users %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>GitHub ID</th>
+                    <th>Created</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.github_id or '-' }}</td>
+                    <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else '-' }}</td>
+                    <td>
+                        <span class="status-badge {% if user.is_active %}status-active{% else %}status-inactive{% endif %}">
+                            {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="padding: 40px; text-align: center; color: #666;">
+            <p>No users found.</p>
+            <a href="{{ url_for('demo.create_user') }}" class="btn">Create your first user</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

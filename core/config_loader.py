@@ -5,8 +5,8 @@ import os
 def load_plugin_configs(plugin_name):
     """Load config.json and plugin.json for a specific plugin"""
     plugin_dir = os.path.join(
-        os.path.dirname(__file__),  # core directory
-        "..",  # project root
+        os.path.dirname(__file__),
+        "..",
         "plugins", 
         plugin_name
     )
@@ -35,10 +35,9 @@ def load_plugin_configs(plugin_name):
     return config_data, plugin_info
 
 # Global dictionaries to store loaded plugin configs
-plugin_configs = {}  # Stores config.json data for each plugin
-plugin_infos = {}    # Stores plugin.json data for each plugin
+plugin_configs = {}
+plugin_infos = {}
 
-# This will be populated by plugin_manager when it loads plugins
 def set_plugin_config(plugin_name, config_data, plugin_info):
     """Store plugin configuration and info"""
     plugin_configs[plugin_name] = config_data
@@ -52,7 +51,6 @@ def get_plugin_info(plugin_name):
     """Get plugin.json data for a plugin"""
     return plugin_infos.get(plugin_name, {})
 
-# Main config - loads only the root config.json
 def load_main_config():
     """Load only the main config.json from root directory"""
     project_root = os.path.join(os.path.dirname(__file__), "..")
@@ -66,5 +64,5 @@ def load_main_config():
     except json.JSONDecodeError:
         raise ValueError(f"Invalid JSON format in main config.json")
 
-# Load main config (without plugin configs)
+# Load main config
 main_config = load_main_config()
