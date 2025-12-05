@@ -57,3 +57,6 @@ instance/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# backups
+.versions/
