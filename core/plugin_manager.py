@@ -2,7 +2,7 @@
 import importlib
 import os
 import sys
-from core.config_loader import load_plugin_configs, set_plugin_config
+from core.config_loader import load_plugin_configs, set_plugin_config, get_plugin_config, get_plugin_info
 from core.database import db, ModelMerger
 
 PLUGIN_FOLDER = os.path.join(os.path.dirname(__file__), "../plugins")
@@ -56,7 +56,7 @@ class PluginManager:
     def create_merged_tables(self):
         """Create merged database tables from all registered models"""
         try:
-            from core.database import _table_columns
+            from core.database import _table_columns, _merged_models
             
             print(f"\n🔀 Creating merged tables...")
             
@@ -64,12 +64,22 @@ class PluginManager:
             for table_name in _table_columns.keys():
                 merged_model = self.model_merger.create_merged_model(table_name)
                 if merged_model:
-                    # The merged model is now registered in SQLAlchemy
-                    pass
+                    print(f"    ✅ Created merged model for '{table_name}'")
+                else:
+                    print(f"    ⚠️  Failed to create merged model for '{table_name}'")
             
-            # Now create all tables with merged columns
-            db.create_all()
-            print(f"✅ All merged tables created successfully\n")
+            # Try to create tables, ignoring errors if they already exist
+            try:
+                db.create_all()
+                print(f"✅ All merged tables created successfully\n")
+            except Exception as e:
+                # If tables already exist, that's fine - just log it
+                if "already exists" in str(e):
+                    print(f"ℹ️  Tables already exist, continuing...")
+                else:
+                    # Re-raise if it's a different error
+                    raise e
+            
             return True
             
         except Exception as e:
@@ -78,8 +88,8 @@ class PluginManager:
             traceback.print_exc()
             return False
     
-    def load_single_plugin(self, app, plugin_name):
-        """Load a single plugin with full error handling"""
+    def load_single_plugin_models(self, plugin_name):
+        """Load only the models from a plugin (for phase 1 loading)"""
         plugin_dir = os.path.join(PLUGIN_FOLDER, plugin_name)
         
         # Check if plugin directory exists
@@ -87,7 +97,7 @@ class PluginManager:
             print(f"❌ Plugin '{plugin_name}' directory not found")
             return False
         
-        print(f"  → Processing plugin: {plugin_name}")
+        print(f"  → Loading models for plugin: {plugin_name}")
         
         try:
             # Load plugin configuration and info
@@ -99,32 +109,38 @@ class PluginManager:
             # Load models (will be registered for merging)
             self.load_plugin_models(plugin_name)
             
-            # Load and register routes
-            try:
-                module_path = f"plugins.{plugin_name}.routes"
-                module = importlib.import_module(module_path)
-                
-                if hasattr(module, 'register'):
-                    # Note: We register routes but don't create tables yet
-                    # Tables will be created after all plugins are loaded
-                    module.register(app)
-                    print(f"    ✅ Registered routes for '{plugin_name}'")
-                    self.loaded_plugins[plugin_name] = {
-                        'config': config_data,
-                        'info': plugin_info,
-                        'module': module
-                    }
-                    return True
-                else:
-                    print(f"    ⚠️  Plugin '{plugin_name}' has no register() function")
-                    return False
-                    
-            except ImportError as e:
-                print(f"    ❌ Could not import routes for '{plugin_name}': {e}")
-                return False
+            return True
                 
         except Exception as e:
             print(f"    ❌ Error loading plugin '{plugin_name}': {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+    
+    def register_plugin_routes(self, app, plugin_name):
+        """Register routes for a plugin after all models are loaded"""
+        try:
+            module_path = f"plugins.{plugin_name}.routes"
+            module = importlib.import_module(module_path)
+            
+            if hasattr(module, 'register'):
+                module.register(app)
+                print(f"    ✅ Registered routes for '{plugin_name}'")
+                self.loaded_plugins[plugin_name] = {
+                    'config': get_plugin_config(plugin_name),
+                    'info': get_plugin_info(plugin_name),
+                    'module': module
+                }
+                return True
+            else:
+                print(f"    ⚠️  Plugin '{plugin_name}' has no register() function")
+                return False
+                
+        except ImportError as e:
+            print(f"    ❌ Could not import routes for '{plugin_name}': {e}")
+            return False
+        except Exception as e:
+            print(f"    ❌ Error registering routes for '{plugin_name}': {e}")
             import traceback
             traceback.print_exc()
             return False
@@ -160,24 +176,47 @@ def load_plugins(app, enabled_plugins):
     
     success_count = 0
     
-    # PHASE 1: Load all plugins and collect their models
+    # PHASE 1: Load ALL plugin models first (without registering routes)
+    print(f"\n📦 Phase 1: Loading plugin models...")
     for plugin_name in enabled_plugins:
-        if plugin_manager.load_single_plugin(app, plugin_name):
+        if plugin_manager.load_single_plugin_models(plugin_name):
             success_count += 1
     
-    # PHASE 2: Create merged tables from all collected models
+    # PHASE 2: Create merged tables from ALL collected models
     print(f"\n{'='*60}")
+    print(f"🔧 Phase 2: Creating merged tables...")
     plugin_manager.create_merged_tables()
     print(f"{'='*60}\n")
     
-    print(f"✅ Plugin loading complete: {success_count}/{len(enabled_plugins)} successful")
+    # PHASE 3: Register routes for all plugins (now models are ready)
+    print(f"🔗 Phase 3: Registering plugin routes...")
+    routes_success_count = 0
+    for plugin_name in enabled_plugins:
+        if plugin_manager.register_plugin_routes(app, plugin_name):
+            routes_success_count += 1
+    
+    print(f"\n{'='*60}")
+    print(f"✅ Plugin loading complete:")
+    print(f"   - Models loaded: {success_count}/{len(enabled_plugins)}")
+    print(f"   - Routes registered: {routes_success_count}/{len(enabled_plugins)}")
+    print(f"{'='*60}\n")
+    
+    # Debug: Show all merged models
+    from core.database import _merged_models, _table_columns
+    print(f"📊 Merged models created:")
+    for table_name, model in _merged_models.items():
+        if table_name in _table_columns:
+            columns = list(_table_columns[table_name]['columns'].keys())
+            plugins = ', '.join(_table_columns[table_name]['plugins'])
+            print(f"   - {table_name} ({model.__name__}): {len(columns)} columns from [{plugins}]")
     
     # Register context processor for plugin status
     @app.context_processor
     def inject_plugin_status():
         return dict(
             loaded_plugins=plugin_manager.get_loaded_plugins(),
-            is_plugin_loaded=plugin_manager.is_plugin_loaded
+            is_plugin_loaded=plugin_manager.is_plugin_loaded,
+            plugin_manager=plugin_manager
         )
 
 def get_plugin_manager():

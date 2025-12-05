@@ -44,6 +44,7 @@
                     <th>Username</th>
                     <th>Email</th>
                     <th>GitHub ID</th>
+                    <th>Gitlab ID</th>
                     <th>Created</th>
                     <th>Status</th>
                 </tr>
@@ -55,6 +56,7 @@
                     <td>{{ user.username }}</td>
                     <td>{{ user.email }}</td>
                     <td>{{ user.github_id or '-' }}</td>
+                    <td>{{ user.gitlab_id or '-' }}</td>
                     <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else '-' }}</td>
                     <td>
                         <span class="status-badge {% if user.is_active %}status-active{% else %}status-inactive{% endif %}">

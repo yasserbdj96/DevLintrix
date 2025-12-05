@@ -9,14 +9,17 @@ class DemoUser(db.Model):
     """Example user model for demo plugin"""
     __tablename__ = 'demo_users'
     __table_args__ = {'extend_existing': True}
+
+    # Primary Key (will be merged with base User model)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
     
-    gitlab_id: Mapped[str] = mapped_column(String(100), unique=True, nullable=True)
+    gitlab_id: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=True)
     
     def __repr__(self):
-        return f'<DemoUser {self.username}>'
+        return f'<User OAuth Extensions>'
     
-    def to_dict(self):
-        """Convert model to dictionary"""
+    def to_dict_oauth(self):
+        """Convert OAuth fields to dictionary"""
         return {
             'gitlab_id': self.gitlab_id
         }

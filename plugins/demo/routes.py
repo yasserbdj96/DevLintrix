@@ -4,9 +4,13 @@ from core.config_loader import get_plugin_config, get_plugin_info
 from core.database import db
 from plugins.demo.models import DemoUser, DemoPost
 from sqlalchemy.exc import IntegrityError
+from core.plugin_manager import get_merged_model
 
 bp = Blueprint("demo", __name__, template_folder="templates", static_folder="static", url_prefix="/demo")
 #bp = Blueprint("demo", __name__, template_folder="templates", static_folder="static")
+
+# Get the merged DemoUser model instead of the local one
+DemoUser = get_merged_model('demo_users')
 
 # Context processor for plugin configs
 @bp.context_processor
