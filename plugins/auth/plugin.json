@@ -1,0 +1,7 @@
+{
+    "name": "Authentication Plugin",
+    "version": "1.0.0",
+    "description": "Base user authentication and profile management",
+    "provides_models": ["User"],
+    "dependencies": []
+}

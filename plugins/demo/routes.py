@@ -5,8 +5,8 @@ from core.database import db
 from plugins.demo.models import DemoUser, DemoPost
 from sqlalchemy.exc import IntegrityError
 
-#bp = Blueprint("demo", __name__, template_folder="templates", static_folder="static", url_prefix="/demo")
-bp = Blueprint("demo", __name__, template_folder="templates", static_folder="static")
+bp = Blueprint("demo", __name__, template_folder="templates", static_folder="static", url_prefix="/demo")
+#bp = Blueprint("demo", __name__, template_folder="templates", static_folder="static")
 
 # Context processor for plugin configs
 @bp.context_processor
