@@ -1,6 +1,7 @@
 # core/config_loader.py
 import json
 import os
+import re
 
 def load_plugin_configs(plugin_name):
     """Load config.json and plugin.json for a specific plugin"""
@@ -19,7 +20,9 @@ def load_plugin_configs(plugin_name):
     if os.path.exists(config_path):
         try:
             with open(config_path, "r", encoding="utf-8") as f:
-                config_data = json.load(f)
+                content = f.read()
+                # Replace ${VAR_NAME} with environment variables
+                config_data = json.loads(resolve_env_vars(content))
         except Exception as e:
             print(f"⚠️  Warning: Could not load config.json for plugin '{plugin_name}': {e}")
     
@@ -33,6 +36,16 @@ def load_plugin_configs(plugin_name):
             print(f"⚠️  Warning: Could not load plugin.json for plugin '{plugin_name}': {e}")
     
     return config_data, plugin_info
+
+def resolve_env_vars(content):
+    """Replace ${VAR_NAME} patterns with environment variables"""
+    def replace_env_var(match):
+        var_name = match.group(1)
+        return os.environ.get(var_name, match.group(0))  # Keep original if not found
+    
+    # Pattern to match ${VAR_NAME}
+    pattern = r'\$\{([A-Za-z0-9_]+)\}'
+    return re.sub(pattern, replace_env_var, content)
 
 # Global dictionaries to store loaded plugin configs
 plugin_configs = {}
@@ -58,11 +71,13 @@ def load_main_config():
     
     try:
         with open(config_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            content = f.read()
+            # Replace ${VAR_NAME} with environment variables
+            return json.loads(resolve_env_vars(content))
     except FileNotFoundError:
         raise FileNotFoundError(f"Main config.json not found at: {config_path}")
-    except json.JSONDecodeError:
-        raise ValueError(f"Invalid JSON format in main config.json")
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON format in main config.json: {e}")
 
 # Load main config
 main_config = load_main_config()
