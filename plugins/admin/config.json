@@ -1,0 +1,6 @@
+{
+    "ADMIN_ENABLED": true,
+    "ADMIN_PASSWORD": "admin1234",
+    "ALLOW_CONFIG_EDIT": true,
+    "ALLOW_PLUGIN_TOGGLE": true
+}

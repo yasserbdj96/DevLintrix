@@ -44,9 +44,13 @@ def handle_exception(error):
 @app.context_processor
 def inject_globals():
     """Inject global variables into all templates"""
+    from core.plugin_manager import plugin_manager
     return dict(
         app_name=main_config.get('APP_NAME', 'My Application'),
-        app_version=main_config.get('VERSION', '1.0.0')
+        app_version=main_config.get('VERSION', '1.0.0'),
+        loaded_plugins=plugin_manager.get_loaded_plugins(),
+        is_plugin_loaded=plugin_manager.is_plugin_loaded,
+        plugin_manager=plugin_manager
     )
 
 # Load plugins after database initialization
@@ -56,4 +60,11 @@ with app.app_context():
 if __name__ == "__main__":
     port = settings.get("PORT", 5000)
     host = settings.get("HOST", "0.0.0.0")
+    
+    print(f"\n{'='*60}")
+    print(f"🚀 Server starting on http://{host}:{port}")
+    print(f"📊 Admin panel: http://localhost:{port}/admin")
+    print(f"🔐 Default admin password: admin123")
+    print(f"{'='*60}\n")
+    
     app.run(host=host, port=port, debug=settings["DEBUG"])

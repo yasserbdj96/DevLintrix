@@ -12,8 +12,13 @@ class DemoUser(db.Model):
 
     # Primary Key (will be merged with base User model)
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    username: Mapped[str] = mapped_column(String(80), unique=True, nullable=False, index=True)
+    email: Mapped[str] = mapped_column(String(120), unique=True, nullable=True)
+    github_id: Mapped[str] = mapped_column(String(100), unique=True, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     
-    gitlab_id: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=True)
+    
     
     def __repr__(self):
         return f'<User OAuth Extensions>'
@@ -21,5 +26,9 @@ class DemoUser(db.Model):
     def to_dict_oauth(self):
         """Convert OAuth fields to dictionary"""
         return {
-            'gitlab_id': self.gitlab_id
+            'username': self.username,
+            'email': self.email,
+            'github_id': self.github_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'is_active': self.is_active
         }

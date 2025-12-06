@@ -14,6 +14,7 @@ class PluginManager:
         self.loaded_plugins = {}
         self.plugin_models = {}
         self.model_merger = ModelMerger()
+        self.registered_blueprints = {}  # Track registered blueprints
     
     def load_plugin_models(self, plugin_name):
         """Load database models from a plugin and register them for merging"""
@@ -120,12 +121,27 @@ class PluginManager:
     def register_plugin_routes(self, app, plugin_name):
         """Register routes for a plugin after all models are loaded"""
         try:
+            # Check if already registered
+            if plugin_name in self.registered_blueprints:
+                print(f"    ℹ️  Plugin '{plugin_name}' routes already registered, skipping")
+                return True
+            
             module_path = f"plugins.{plugin_name}.routes"
-            module = importlib.import_module(module_path)
+            
+            # Reload module if it was already imported
+            if module_path in sys.modules:
+                module = importlib.reload(sys.modules[module_path])
+            else:
+                module = importlib.import_module(module_path)
             
             if hasattr(module, 'register'):
                 module.register(app)
                 print(f"    ✅ Registered routes for '{plugin_name}'")
+                
+                # Store blueprint reference
+                if hasattr(module, 'bp'):
+                    self.registered_blueprints[plugin_name] = module.bp
+                
                 self.loaded_plugins[plugin_name] = {
                     'config': get_plugin_config(plugin_name),
                     'info': get_plugin_info(plugin_name),
@@ -143,6 +159,28 @@ class PluginManager:
             print(f"    ❌ Error registering routes for '{plugin_name}': {e}")
             import traceback
             traceback.print_exc()
+            return False
+    
+    def unregister_plugin_routes(self, app, plugin_name):
+        """Unregister routes for a plugin"""
+        try:
+            if plugin_name in self.registered_blueprints:
+                blueprint = self.registered_blueprints[plugin_name]
+                
+                # Remove blueprint from app
+                if blueprint.name in app.blueprints:
+                    # Flask doesn't officially support unregistering blueprints
+                    # So we'll just mark it as unloaded in our tracking
+                    print(f"    🗑️  Marked plugin '{plugin_name}' routes for removal")
+                    del self.registered_blueprints[plugin_name]
+                
+                if plugin_name in self.loaded_plugins:
+                    del self.loaded_plugins[plugin_name]
+                
+                return True
+            return False
+        except Exception as e:
+            print(f"    ⚠️  Error unregistering plugin '{plugin_name}': {e}")
             return False
     
     def get_loaded_plugins(self):
@@ -209,15 +247,6 @@ def load_plugins(app, enabled_plugins):
             columns = list(_table_columns[table_name]['columns'].keys())
             plugins = ', '.join(_table_columns[table_name]['plugins'])
             print(f"   - {table_name} ({model.__name__}): {len(columns)} columns from [{plugins}]")
-    
-    # Register context processor for plugin status
-    @app.context_processor
-    def inject_plugin_status():
-        return dict(
-            loaded_plugins=plugin_manager.get_loaded_plugins(),
-            is_plugin_loaded=plugin_manager.is_plugin_loaded,
-            plugin_manager=plugin_manager
-        )
 
 def get_plugin_manager():
     """Get the global plugin manager instance"""

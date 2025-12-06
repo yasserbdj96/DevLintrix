@@ -2,6 +2,10 @@
 import json
 import os
 import re
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 def load_plugin_configs(plugin_name):
     """Load config.json and plugin.json for a specific plugin"""
@@ -22,9 +26,14 @@ def load_plugin_configs(plugin_name):
             with open(config_path, "r", encoding="utf-8") as f:
                 content = f.read()
                 # Replace ${VAR_NAME} with environment variables
-                config_data = json.loads(resolve_env_vars(content))
+                resolved_content = resolve_env_vars(content)
+                config_data = json.loads(resolved_content)
+                print(f"    ✅ Loaded config.json for '{plugin_name}'")
+        except json.JSONDecodeError as e:
+            print(f"    ⚠️  Warning: Invalid JSON in config.json for plugin '{plugin_name}': {e}")
+            print(f"        Check for trailing commas or syntax errors")
         except Exception as e:
-            print(f"⚠️  Warning: Could not load config.json for plugin '{plugin_name}': {e}")
+            print(f"    ⚠️  Warning: Could not load config.json for plugin '{plugin_name}': {e}")
     
     # Load plugin.json (if exists)
     plugin_path = os.path.join(plugin_dir, "plugin.json")
@@ -33,7 +42,7 @@ def load_plugin_configs(plugin_name):
             with open(plugin_path, "r", encoding="utf-8") as f:
                 plugin_info = json.load(f)
         except Exception as e:
-            print(f"⚠️  Warning: Could not load plugin.json for plugin '{plugin_name}': {e}")
+            print(f"    ⚠️  Warning: Could not load plugin.json for plugin '{plugin_name}': {e}")
     
     return config_data, plugin_info
 
@@ -41,7 +50,10 @@ def resolve_env_vars(content):
     """Replace ${VAR_NAME} patterns with environment variables"""
     def replace_env_var(match):
         var_name = match.group(1)
-        return os.environ.get(var_name, match.group(0))  # Keep original if not found
+        env_value = os.environ.get(var_name, '')
+        if not env_value:
+            print(f"    ⚠️  Warning: Environment variable '{var_name}' not found")
+        return env_value if env_value else match.group(0)
     
     # Pattern to match ${VAR_NAME}
     pattern = r'\$\{([A-Za-z0-9_]+)\}'

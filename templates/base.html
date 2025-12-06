@@ -1,19 +1,51 @@
 <!-- templates/base.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="{{ session.get('theme', 'light') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{% endblock %} - {{ app_name }}</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #f5f5f5; color: #333; }
-        a { color: #667eea; }
-    </style>
+    <title>{% block title %}{% endblock %} - GitHub Auth</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    {% block content %}{% endblock %}
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
     {% block extra_js %}{% endblock %}
+    <script>
+        // Theme toggle functionality
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            html.setAttribute('data-theme', newTheme);
+            
+            // Save preference to server
+            fetch('/api/theme', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ theme: newTheme })
+            });
+            
+            // Update button text
+            const themeBtn = document.getElementById('themeToggle');
+            if (themeBtn) {
+                themeBtn.textContent = newTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+            }
+        }
+        
+        // Initialize theme button text
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeBtn = document.getElementById('themeToggle');
+            if (themeBtn) {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                themeBtn.textContent = currentTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+            }
+        });
+    </script>
 </body>
 </html>
