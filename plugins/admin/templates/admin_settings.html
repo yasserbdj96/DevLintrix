@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings Editor - Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background: white;
+            padding: 20px 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .navbar h1 {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5568d3; }
+        
+        .btn-success { background: #10b981; color: white; }
+        .btn-success:hover { background: #059669; }
+        
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-warning:hover { background: #d97706; }
+        
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .card h2 {
+            color: #1e293b;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        
+        .setting-group {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+        
+        .setting-group:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+        }
+        
+        .setting-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .setting-name {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 1.1rem;
+        }
+        
+        .setting-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-live {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .badge-restart {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .setting-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: monospace;
+            transition: all 0.3s;
+        }
+        
+        .setting-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .setting-description {
+            color: #64748b;
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+        
+        .setting-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+        
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+        
+        .json-editor {
+            width: 100%;
+            min-height: 400px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            resize: vertical;
+        }
+        
+        .json-editor:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>⚙️ Settings Editor</h1>
+        <a href="/admin" class="btn btn-primary">← Back to Dashboard</a>
+    </div>
+    
+    <div class="container">
+        <div id="alertBox" class="alert"></div>
+        
+        <div class="card">
+            <h2>Application Settings</h2>
+            <p style="color: #64748b; margin-bottom: 30px;">
+                Settings marked with 🟢 can be updated in real-time without restarting the server.
+                Settings marked with 🔴 require a server restart to take effect.
+            </p>
+            
+            <div id="settingsContainer"></div>
+        </div>
+        
+        <div class="card">
+            <h2>Advanced: Edit Raw JSON</h2>
+            <div class="toolbar">
+                <button onclick="formatJson()" class="btn btn-primary">🎨 Format</button>
+                <button onclick="validateJson()" class="btn btn-success">✓ Validate</button>
+                <button onclick="saveRawJson()" class="btn btn-success">💾 Save All</button>
+                <button onclick="backupConfig()" class="btn btn-warning">📦 Backup</button>
+            </div>
+            <textarea id="jsonEditor" class="json-editor">{{ config | tojson(indent=4) }}</textarea>
+        </div>
+    </div>
+    
+    <script>
+        const config = {{ config | tojson }};
+        
+        const settingDefinitions = {
+            'APP_NAME': {
+                type: 'text',
+                label: 'Application Name',
+                description: 'The name of your application',
+                live: true
+            },
+            'VERSION': {
+                type: 'text',
+                label: 'Version',
+                description: 'Application version number',
+                live: true
+            },
+            'DEBUG': {
+                type: 'boolean',
+                label: 'Debug Mode',
+                description: 'Enable debug mode (requires restart)',
+                live: false
+            },
+            'HOST': {
+                type: 'text',
+                label: 'Host',
+                description: 'Server host address (requires restart)',
+                live: false
+            },
+            'PORT': {
+                type: 'number',
+                label: 'Port',
+                description: 'Server port number (requires restart)',
+                live: false
+            },
+            'DATABASE_URI': {
+                type: 'text',
+                label: 'Database URI',
+                description: 'Database connection string (requires restart)',
+                live: false
+            }
+        };
+        
+        function showAlert(message, type = 'success') {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.textContent = message;
+            alertBox.className = `alert alert-${type}`;
+            alertBox.style.display = 'block';
+            
+            setTimeout(() => {
+                alertBox.style.display = 'none';
+            }, 5000);
+        }
+        
+        function renderSettings() {
+            const container = document.getElementById('settingsContainer');
+            container.innerHTML = '';
+            
+            Object.keys(config).forEach(key => {
+                if (key === 'PLUGINS_ENABLED') return; // Skip plugins list
+                
+                const def = settingDefinitions[key] || {
+                    type: 'text',
+                    label: key,
+                    description: 'Custom setting',
+                    live: false
+                };
+                
+                const value = config[key];
+                const settingDiv = document.createElement('div');
+                settingDiv.className = 'setting-group';
+                
+                let inputHtml = '';
+                if (def.type === 'boolean') {
+                    inputHtml = `
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="setting_${key}" 
+                                   ${value ? 'checked' : ''}
+                                   onchange="updateSetting('${key}', this.checked, ${def.live})"
+                                   style="width: 20px; height: 20px; cursor: pointer;">
+                            <span style="color: #64748b;">${value ? 'Enabled' : 'Disabled'}</span>
+                        </label>
+                    `;
+                } else {
+                    inputHtml = `
+                        <input type="${def.type}" 
+                               id="setting_${key}" 
+                               class="setting-input"
+                               value="${value}"
+                               onchange="updateSetting('${key}', this.value, ${def.live})">
+                    `;
+                }
+                
+                settingDiv.innerHTML = `
+                    <div class="setting-header">
+                        <div class="setting-name">${def.label}</div>
+                        <div class="setting-badge ${def.live ? 'badge-live' : 'badge-restart'}">
+                            ${def.live ? '🟢 Live Update' : '🔴 Restart Required'}
+                        </div>
+                    </div>
+                    ${inputHtml}
+                    <div class="setting-description">${def.description}</div>
+                `;
+                
+                container.appendChild(settingDiv);
+            });
+        }
+        
+        async function updateSetting(key, value, live) {
+            try {
+                const response = await fetch('/admin/api/update-setting', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        key: key,
+                        value: value,
+                        restart_required: !live
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    config[key] = value;
+                    document.getElementById('jsonEditor').value = JSON.stringify(config, null, 4);
+                    showAlert(data.message, 'success');
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error updating setting: ' + error.message, 'error');
+            }
+        }
+        
+        function formatJson() {
+            try {
+                const editor = document.getElementById('jsonEditor');
+                const parsed = JSON.parse(editor.value);
+                editor.value = JSON.stringify(parsed, null, 4);
+                showAlert('JSON formatted successfully', 'success');
+            } catch (error) {
+                showAlert('Invalid JSON: ' + error.message, 'error');
+            }
+        }
+        
+        function validateJson() {
+            try {
+                const editor = document.getElementById('jsonEditor');
+                JSON.parse(editor.value);
+                showAlert('✓ JSON is valid', 'success');
+            } catch (error) {
+                showAlert('Invalid JSON: ' + error.message, 'error');
+            }
+        }
+        
+        async function saveRawJson() {
+            try {
+                const editor = document.getElementById('jsonEditor');
+                const newConfig = JSON.parse(editor.value);
+                
+                // Update each setting
+                for (const [key, value] of Object.entries(newConfig)) {
+                    await updateSetting(key, value, false);
+                }
+                
+                showAlert('All settings saved! Restart server to apply changes.', 'success');
+            } catch (error) {
+                showAlert('Error saving: ' + error.message, 'error');
+            }
+        }
+        
+        async function backupConfig() {
+            try {
+                const response = await fetch('/admin/api/backup-config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert(data.message, 'success');
+                } else {
+                    showAlert(data.message, 'error');
+                }
+            } catch (error) {
+                showAlert('Error creating backup: ' + error.message, 'error');
+            }
+        }
+        
+        // Initialize
+        renderSettings();
+    </script>
+</body>
+</html>

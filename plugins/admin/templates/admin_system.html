@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Monitor - Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background: white;
+            padding: 20px 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .navbar h1 {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5568d3; }
+        
+        .container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .metric-title {
+            font-size: 0.9rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .metric-icon {
+            font-size: 2rem;
+        }
+        
+        .metric-value {
+            font-size: 3rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .metric-label {
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+        
+        .progress-bar {
+            background: #e2e8f0;
+            border-radius: 10px;
+            height: 12px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+        
+        .progress-low { background: linear-gradient(90deg, #10b981, #059669); }
+        .progress-medium { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .progress-high { background: linear-gradient(90deg, #ef4444, #dc2626); }
+        
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .chart-container h2 {
+            color: #1e293b;
+            margin-bottom: 20px;
+        }
+        
+        .chart {
+            width: 100%;
+            height: 300px;
+            position: relative;
+        }
+        
+        .chart-line {
+            stroke: #667eea;
+            stroke-width: 3;
+            fill: none;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-label {
+            color: #64748b;
+            font-weight: 600;
+        }
+        
+        .info-value {
+            color: #1e293b;
+            font-family: monospace;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .status-good { background: #d1fae5; color: #065f46; }
+        .status-warning { background: #fef3c7; color: #92400e; }
+        .status-critical { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>📊 System Monitor</h1>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="refreshMetrics()" class="btn btn-primary">🔄 Refresh</button>
+            <a href="/admin" class="btn btn-primary">← Back</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-title">CPU Usage</div>
+                    <div class="metric-icon">💻</div>
+                </div>
+                <div class="metric-value" id="cpuValue">--</div>
+                <div class="metric-label">Current Utilization</div>
+                <div class="progress-bar">
+                    <div class="progress-fill progress-low" id="cpuBar" style="width: 0%"></div>
+                </div>
+                <div id="cpuStatus" class="status-badge status-good">Normal</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-title">Memory Usage</div>
+                    <div class="metric-icon">🧠</div>
+                </div>
+                <div class="metric-value" id="memValue">--</div>
+                <div class="metric-label" id="memLabel">-- / -- GB</div>
+                <div class="progress-bar">
+                    <div class="progress-fill progress-low" id="memBar" style="width: 0%"></div>
+                </div>
+                <div id="memStatus" class="status-badge status-good">Normal</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-title">Disk Usage</div>
+                    <div class="metric-icon">💾</div>
+                </div>
+                <div class="metric-value" id="diskValue">--</div>
+                <div class="metric-label" id="diskLabel">-- / -- GB</div>
+                <div class="progress-bar">
+                    <div class="progress-fill progress-low" id="diskBar" style="width: 0%"></div>
+                </div>
+                <div id="diskStatus" class="status-badge status-good">Normal</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-title">Network I/O</div>
+                    <div class="metric-icon">🌐</div>
+                </div>
+                <div style="display: flex; gap: 20px; margin-top: 20px;">
+                    <div style="flex: 1;">
+                        <div style="color: #10b981; font-weight: 600; font-size: 0.85rem;">↓ RECEIVED</div>
+                        <div style="font-size: 1.5rem; font-weight: bold; color: #1e293b;" id="netRecv">--</div>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="color: #ef4444; font-weight: 600; font-size: 0.85rem;">↑ SENT</div>
+                        <div style="font-size: 1.5rem; font-weight: bold; color: #1e293b;" id="netSent">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <h2>Database Statistics</h2>
+            <div class="info-grid" id="dbStats">
+                <div class="info-item">
+                    <span class="info-label">Loading...</span>
+                    <span class="info-value">--</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <h2>Process Information</h2>
+            <div class="info-grid" id="processInfo">
+                <div class="info-item">
+                    <span class="info-label">PID</span>
+                    <span class="info-value" id="pid">--</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Threads</span>
+                    <span class="info-value" id="threads">--</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Connections</span>
+                    <span class="info-value" id="connections">--</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Last Update</span>
+                    <span class="info-value" id="lastUpdate">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
+        }
+        
+        function getStatusClass(percent) {
+            if (percent < 60) return 'progress-low';
+            if (percent < 80) return 'progress-medium';
+            return 'progress-high';
+        }
+        
+        function getStatusBadge(percent) {
+            if (percent < 60) return '<span class="status-badge status-good">Normal</span>';
+            if (percent < 80) return '<span class="status-badge status-warning">Warning</span>';
+            return '<span class="status-badge status-critical">Critical</span>';
+        }
+        
+        async function updateMetrics() {
+            try {
+                const response = await fetch('/admin/api/system-metrics');
+                const data = await response.json();
+                
+                // CPU
+                const cpuPercent = data.cpu.percent;
+                document.getElementById('cpuValue').textContent = cpuPercent.toFixed(1) + '%';
+                document.getElementById('cpuBar').style.width = cpuPercent + '%';
+                document.getElementById('cpuBar').className = 'progress-fill ' + getStatusClass(cpuPercent);
+                document.getElementById('cpuStatus').outerHTML = getStatusBadge(cpuPercent);
+                
+                // Memory
+                const memPercent = data.memory.percent;
+                const memUsed = formatBytes(data.memory.used);
+                const memTotal = formatBytes(data.memory.total);
+                document.getElementById('memValue').textContent = memPercent.toFixed(1) + '%';
+                document.getElementById('memLabel').textContent = `${memUsed} / ${memTotal}`;
+                document.getElementById('memBar').style.width = memPercent + '%';
+                document.getElementById('memBar').className = 'progress-fill ' + getStatusClass(memPercent);
+                document.getElementById('memStatus').outerHTML = getStatusBadge(memPercent);
+                
+                // Disk
+                const diskPercent = data.disk.percent;
+                const diskUsed = formatBytes(data.disk.used);
+                const diskTotal = formatBytes(data.disk.total);
+                document.getElementById('diskValue').textContent = diskPercent.toFixed(1) + '%';
+                document.getElementById('diskLabel').textContent = `${diskUsed} / ${diskTotal}`;
+                document.getElementById('diskBar').style.width = diskPercent + '%';
+                document.getElementById('diskBar').className = 'progress-fill ' + getStatusClass(diskPercent);
+                document.getElementById('diskStatus').outerHTML = getStatusBadge(diskPercent);
+                
+                // Network
+                document.getElementById('netRecv').textContent = formatBytes(data.network.bytes_recv);
+                document.getElementById('netSent').textContent = formatBytes(data.network.bytes_sent);
+                
+                // Process info
+                document.getElementById('pid').textContent = data.process.pid;
+                document.getElementById('threads').textContent = data.process.threads;
+                document.getElementById('connections').textContent = data.process.connections;
+                document.getElementById('lastUpdate').textContent = new Date(data.timestamp).toLocaleTimeString();
+                
+            } catch (error) {
+                console.error('Error updating metrics:', error);
+            }
+        }
+        
+        async function updateDatabaseStats() {
+            try {
+                const response = await fetch('/admin/api/database-stats');
+                const data = await response.json();
+                
+                const container = document.getElementById('dbStats');
+                
+                if (data.error) {
+                    container.innerHTML = `
+                        <div class="info-item">
+                            <span class="info-label">Error</span>
+                            <span class="info-value">${data.error}</span>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = `
+                    <div class="info-item">
+                        <span class="info-label">Total Tables</span>
+                        <span class="info-value">${data.total_tables}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Total Plugins</span>
+                        <span class="info-value">${data.total_plugins}</span>
+                    </div>
+                `;
+                
+                data.tables.forEach(table => {
+                    html += `
+                        <div class="info-item">
+                            <span class="info-label">${table.name}</span>
+                            <span class="info-value">${table.rows} rows</span>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error updating DB stats:', error);
+            }
+        }
+        
+        function refreshMetrics() {
+            updateMetrics();
+            updateDatabaseStats();
+        }
+        
+        // Initial load
+        updateMetrics();
+        updateDatabaseStats();
+        
+        // Auto-refresh every 3 seconds
+        setInterval(updateMetrics, 3000);
+        
+        // Refresh DB stats every 30 seconds
+        setInterval(updateDatabaseStats, 30000);
+    </script>
+</body>
+</html>
