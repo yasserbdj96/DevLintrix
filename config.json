@@ -1,14 +1,12 @@
 {
     "APP_NAME": "My Flask Application",
     "VERSION": "0.0.0-beta",
-    "DEBUG": true,
+    "DEBUG": false,
     "SECRET_KEY": "your-secret-key-change-in-production",
     "HOST": "0.0.0.0",
     "PORT": 5000,
     "DATABASE_URI": "sqlite:///app.db",
     "PLUGINS_ENABLED": [
-        "admin",
-        "demo",
-        "auth"
+        "admincp"
     ]
 }

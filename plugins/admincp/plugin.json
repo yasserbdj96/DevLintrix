@@ -1,0 +1,39 @@
+{
+    "name": "admincp",
+    "version": "1.0.0",
+    "description": "Comprehensive admin control panel for managing your Flask application",
+    "author": "Admin",
+    "dependencies": [],
+    "routes": [
+        {
+            "path": "/admincp",
+            "methods": ["GET"],
+            "description": "Admin dashboard"
+        },
+        {
+            "path": "/admincp/plugins",
+            "methods": ["GET"],
+            "description": "Plugin management"
+        },
+        {
+            "path": "/admincp/database",
+            "methods": ["GET"],
+            "description": "Database management"
+        },
+        {
+            "path": "/admincp/config",
+            "methods": ["GET", "POST"],
+            "description": "Configuration editor"
+        },
+        {
+            "path": "/admincp/logs",
+            "methods": ["GET"],
+            "description": "Log viewer"
+        },
+        {
+            "path": "/admincp/system",
+            "methods": ["GET"],
+            "description": "System information"
+        }
+    ]
+}

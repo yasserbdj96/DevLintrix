@@ -5,6 +5,7 @@ from core.settings_loader import settings
 from core.plugin_manager import load_plugins
 from core.database import db, init_db
 import os
+import sys
 
 app = Flask(__name__)
 
@@ -60,11 +61,4 @@ with app.app_context():
 if __name__ == "__main__":
     port = settings.get("PORT", 5000)
     host = settings.get("HOST", "0.0.0.0")
-    
-    print(f"\n{'='*60}")
-    print(f"🚀 Server starting on http://{host}:{port}")
-    print(f"📊 Admin panel: http://localhost:{port}/admin")
-    print(f"🔐 Default admin password: admin123")
-    print(f"{'='*60}\n")
-    
     app.run(host=host, port=port, debug=settings["DEBUG"])

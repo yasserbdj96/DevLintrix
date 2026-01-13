@@ -1,7 +1,0 @@
-{
-    "name": "Admin Panel Plugin",
-    "version": "1.0.0",
-    "description": "Admin panel for managing plugins and configuration",
-    "provides_models": [],
-    "dependencies": []
-}

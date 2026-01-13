@@ -1,0 +1,8 @@
+{
+    "ADMIN_TITLE": "Admin Control Panel",
+    "ADMIN_THEME": "modern",
+    "ITEMS_PER_PAGE": 50,
+    "ENABLE_QUERY_CONSOLE": true,
+    "ENABLE_CONFIG_EDITOR": true,
+    "ENABLE_LOG_VIEWER": true
+}

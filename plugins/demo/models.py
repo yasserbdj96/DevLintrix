@@ -10,7 +10,12 @@ class DemoUser(db.Model):
     __table_args__ = {'extend_existing': True}
     
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    username: Mapped[str] = mapped_column(String(80), unique=True, nullable=False, index=True)
+    email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False, index=True)
+    github_id: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=True)
     gitlab_id: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     
     def __repr__(self):
         return f'<DemoUser {self.username}>'
@@ -19,7 +24,12 @@ class DemoUser(db.Model):
         """Convert model to dictionary"""
         return {
             'id': self.id,
-            'gitlab_id': self.gitlab_id
+            'username': self.username,
+            'email': self.email,
+            'github_id': self.github_id,
+            'gitlab_id': self.gitlab_id,
+            'is_active': self.is_active,
+            'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
 class DemoPost(db.Model):
